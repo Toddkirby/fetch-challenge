@@ -20,4 +20,33 @@ Architecture: This small repo will utilize the Page Object Model with the fetchP
 
 Note:
 
-I wrote the locators in such a way to have them scale if the app were to ever scale in size and thought recursion was a fun way to solve the shrinking array with the fake gold.
+I wrote the locators in such a way to have them scale if the app were to ever scale in size and thought a psuedo-recursion was a fun way to solve the shrinking array with the fake gold.
+
+HOW TO USE:
+
+Requirements: nodejs@22
+
+Step by step from terminal:
+
+1- git clone https://github.com/Toddkirby/fetch-challenge.git
+    (clone the repo)
+
+2- cd into fetch-challenge
+    (enter the directory where the src code lives)
+
+2- npm i
+    (install dependencies)
+
+3- npx playwright install
+    (install playwright window binaries)
+
+4- npx playwright test fetchGold --headed
+    (tell node & playwright to launch the test file with a headed browser!)
+
+final thoughts:
+
+Handling the dialog for victory / loss was a bit wonky with the test runner but there is a listener for the popup for visual verification vs the screenshot like I was trying for.
+
+This listener does break the test because it will attempt to close it 3 times despite being called once.
+
+Lastly there are a few expects to verify the site prior to loading the next instruction.

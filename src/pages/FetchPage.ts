@@ -1,5 +1,6 @@
 import { expect, Page } from "@playwright/test";
 import { BasePage } from "../utils/BasePage";
+import exp from "constants";
 
 export class FetchPage extends BasePage {
   constructor(page: Page) {
@@ -21,88 +22,138 @@ export class FetchPage extends BasePage {
     await this.resetBtn.click();
   }
   async getResultText(){
-    let result = await this.resetBtn.textContent();
+    let result = await this.resultBtn.textContent();
     return result?.trim();
   }
-  async clickDesiredCoin(number:string){
-    await this.page.getByRole('button',{name: number}).click()
+  async clickDesiredCoin(num:number){
+    let coin = num.toString()
+    console.log(coin)
+    await this.page.getByRole('button',{name: coin}).click({force:true})
   }
   async getAmountOfCoins(){
     let amount = await this.page.locator("//button[@class='square']").count();
     return amount;
   }
-  async getHalfAmountOfCoins(amount: number){   
-    await Math.floor(amount / 2);
+  async checkWeighings(i:number){
+    await this.page.waitForTimeout(3000);
+    await this.page.getByRole('listitem').nth(i).waitFor({state: 'attached'})
   }
-  async clickFinalCoinBasedOnResult(coins: number[]){
-    if(coins.length == 2){
-        if(this.getResultText.toString() == '>'){
-            return await this.clickDesiredCoin(coins[1].toString());
-        } else {
-            return await this.clickDesiredCoin(coins[0].toString());
-        }
-    }
+  async handleDialogue(){
+    this.page.once('dialog', async dialog => {
+      
+      await this.takeScreenshot();
+      await dialog.dismiss()});
   }
+  // async clickFinalCoinBasedOnResult(coins: number[]){
+  //   if(coins.length == 2){
+  //       if(this.getResultText.toString() == '>'){
+  //           return await this.clickDesiredCoin(coins[1].toString());
+  //       } else {
+  //           return await this.clickDesiredCoin(coins[0].toString());
+  //       }
+  //   }
+  // }
   async enterLeftBowl(amount: number[]){
     let i = 0;
-    let halfAmount = Math.floor(amount.length / 2)
+    let largestCoin = amount.length
+    let halfAmount = Math.floor(largestCoin / 2)
     let newArray: number[] = new Array();
-    while(i <= halfAmount){
-        await this.leftBowlFirstSlot.fill(i.toString());
+    await this.leftBowlFirstSlot.click()
+    while(i < halfAmount){
         newArray.push(amount[i]);
-        i++;
+        await this.page.keyboard.press(amount[i].toString())
         await this.page.keyboard.press('Tab');
+        ++i;
     }
     return newArray;
   }
   async enterRightBowl(amount: number[]){
-    let j = amount.length - 1;
-    let halfAmount = Math.floor(amount.length / 2);
+    let j = amount.length -1;
+    let largestCoin = amount.length -1
+    let halfAmount = Math.floor(largestCoin / 2);
     let newArray: number[] = new Array();
+    await this.rightBowlFirstSlot.click()
     while(j > halfAmount){
-        await this.rightBowlFirstSlot.fill(j.toString())
         newArray.unshift(amount[j]);
-        j--;
+        await this.page.keyboard.press(amount[j].toString());
         await this.page.keyboard.press('Tab');
+        --j;
     }
     return newArray;
   }
 
-  async newArrayRecursion(amount: number[]){
-    if(amount.length <=1 ){
-        return;
-    }
-    let result = await this.getResultText();
-    await this.clickReset();
-        switch (result){
-            case '<':
-                console.log('fake in the left group')
-                let leftArray:number[] = await this.enterLeftBowl(amount);
-                await this.enterRightBowl(amount);
-                await this.clickWeigh();
-                await this.clickFinalCoinBasedOnResult(amount)
-                await this.newArrayRecursion(leftArray);
-                break;
-            case '>':
-                console.log('fake in the right group')
-                let rightArray: number[]= await this.enterRightBowl(amount);
-                await this.enterLeftBowl(amount);
-                await this.clickWeigh();
-                await this.clickFinalCoinBasedOnResult(amount)
-                await this.newArrayRecursion(rightArray);
-                break;
-            case '=':
-                console.log('fake is the middle number')
-                await this.clickDesiredCoin(
-                    await this.getHalfAmountOfCoins(
-                        await this.getAmountOfCoins()
-                    ).toString()
-                )
-                break;
-            default:
-                console.log('unexpected result');
-                break;
-          }
+  async checkResult(left:number[], right:number[], result){
+    switch (result){
+                case '<':
+                    console.log('fake in the left group')
+                    if(left.length == 1){
+                      await this.clickDesiredCoin(left[0]);
+                      // await this.takeScreenshot();
+                    } else {
+                      await this.clickReset()
+                    }
+                    return left;
+                    
+                case '>':
+                    console.log('fake in the right group')
+                    if(right.length == 1){
+                      await this.clickDesiredCoin(right[0]);
+                      // await this.takeScreenshot();
+                    } else {
+                      await this.clickReset()
+                    }
+                    return right;
+                case '=':
+                    console.log('fake is the middle number')
+                    await this.clickDesiredCoin(Math.floor(
+                          await this.getAmountOfCoins() / 2
+                        )
+                      )
+                    // await this.takeScreenshot();
+                     
+                      
+                    return [];
+                default:
+                    console.log('unexpected result');
+                    break;
+              }
   }
+
+  // async newArrayRecursion(amount: number[]){
+  //   if(amount.length <=1 ){
+  //       return;
+  //   }
+  //   let result = await this.getResultText();
+  //   await this.clickReset();
+  //       switch (result){
+  //           case '<':
+  //               console.log('fake in the left group')
+  //               let leftArray:number[] = await this.enterLeftBowl(amount);
+  //               await this.enterRightBowl(amount);
+  //               await this.clickWeigh();
+  //               await this.clickFinalCoinBasedOnResult(amount)
+  //               await this.newArrayRecursion(leftArray);
+  //               break;
+  //           case '>':
+  //               console.log('fake in the right group')
+  //               let rightArray: number[]= await this.enterRightBowl(amount);
+  //               await this.enterLeftBowl(amount);
+  //               await this.clickWeigh();
+  //               await this.clickFinalCoinBasedOnResult(amount)
+  //               await this.newArrayRecursion(rightArray);
+  //               break;
+  //           case '=':
+  //               console.log('fake is the middle number')
+  //               await this.clickDesiredCoin(
+  //                   await this.getHalfAmountOfCoins(
+  //                       await this.getAmountOfCoins()
+  //                   ).toString()
+  //               )
+  //               break;
+  //           default:
+  //               console.log('unexpected result');
+  //               break;
+  //         }
+  // }
 
 }

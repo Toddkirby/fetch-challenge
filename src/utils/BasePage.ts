@@ -7,6 +7,6 @@ export class BasePage {
   //common methods shared with the common locators
 
   async takeScreenshot() {
-    await this.page.screenshot();
+    await this.page.screenshot({ path: 'screenshot.png'});
   }
 }
